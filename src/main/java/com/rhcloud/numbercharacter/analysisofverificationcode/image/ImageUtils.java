@@ -12,6 +12,12 @@ import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 import java.awt.image.Raster;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +25,15 @@ import org.slf4j.LoggerFactory;
 public class ImageUtils {
 
 	public static final Logger LOG = LoggerFactory.getLogger(ImageUtils.class);
-	public static int MAX = 255;
+	public static final int MAX = 255;
+	/**
+	 * 中值滤波
+	 */
+	public static final int MEDIAN_FILTER = 10;
+	/**
+	 * 均值滤波
+	 */
+	public static final int MEAN_FILTER = 11;
 
 	/**
 	 * 二值化
@@ -68,7 +82,7 @@ public class ImageUtils {
 	 * @param image
 	 * @return
 	 */
-	public BufferedImage sharp(BufferedImage image) {
+	public static BufferedImage  sharp(BufferedImage image) {
 		int height = image.getHeight();
 		int width = image.getWidth();
 		int[] pixels = new int[height * width];
@@ -133,7 +147,7 @@ public class ImageUtils {
 	 * @param image
 	 * @return
 	 */
-	public BufferedImage medianFilter(BufferedImage image) {
+	public static BufferedImage medianFilter(BufferedImage image) {
 		int height = image.getHeight();
 		int width = image.getWidth();
 		int[] pixels = new int[height * width];
@@ -251,7 +265,7 @@ public class ImageUtils {
 	 * @param image
 	 * @return
 	 */
-	public BufferedImage meanFilter(BufferedImage image) {
+	public static BufferedImage meanFilter(BufferedImage image) {
 		int height = image.getHeight();
 		int width = image.getWidth();
 		int[] pixels = new int[height * width];
@@ -298,8 +312,8 @@ public class ImageUtils {
 						+ blue8 + blue9) / 8;
 
 				int rgb = MAX << 24 | meanRed << 16 | meanGreen << 8 | meanBlue;
-				pixels[(i - 1) * width + j - 1] = rgb;
-				// pixels[i * width + j] = rgb;
+				//pixels[(i - 1) * width + j - 1] = rgb;
+				pixels[i * width + j] = rgb;
 			}
 		}
 		return pixelsToImage(pixels, width, height);
@@ -344,14 +358,14 @@ public class ImageUtils {
 	}
 
 	/** 转换为黑白灰度图 */
-	public BufferedImage grayFilter(BufferedImage image) {
+	public static BufferedImage grayFilter(BufferedImage image) {
 		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
 		ColorConvertOp op = new ColorConvertOp(cs, null);
 		return op.filter(image, null);
 	}
 
 	/** 平滑缩放 */
-	public BufferedImage scaling(BufferedImage image, double s) {
+	public static BufferedImage scaling(BufferedImage image, double s) {
 		AffineTransform tx = new AffineTransform();
 		tx.scale(s, s);
 		AffineTransformOp op = new AffineTransformOp(tx,
@@ -359,7 +373,7 @@ public class ImageUtils {
 		return op.filter(image, null);
 	}
 
-	public BufferedImage scale(BufferedImage image, Float s) {
+	public static BufferedImage scale(BufferedImage image, Float s) {
 		int srcW = image.getWidth();
 		int srcH = image.getHeight();
 		int newW = Math.round(srcW * s);
@@ -372,14 +386,26 @@ public class ImageUtils {
 			// 按比例放缩
 			g.drawImage(image, x - x * srcW / newW, 0, null);
 		}
+		g.dispose();
 
 		// 再做垂直方向上的伸缩变换
 		BufferedImage dst = new BufferedImage(newW, newH, image.getType());
+		//Graphics2D g = dst.createGraphics();
 		g = dst.createGraphics();
 		for (int y = 0; y < newH; y++) {
 			g.setClip(0, y, newW, 1);
 			// 按比例放缩
 			g.drawImage(tmp, 0, y - y * srcH / newH, null);
+		}
+		g.dispose();
+		try {
+			ImageIO.write(dst, "jpeg", new FileOutputStream(new File("C:\\images\\xxxxx.jpg")));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return dst;
 	}
