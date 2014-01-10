@@ -35,6 +35,12 @@ public class ImageUtils {
 	 */
 	public static final int MEAN_FILTER = 11;
 
+	public static final int LINE_GRAY = 12;
+	
+	public static final int GRAY_FILTER = 13;
+	
+	public static final int MeanThreshold = 14;
+
 	/**
 	 * 二值化
 	 * 
@@ -82,7 +88,7 @@ public class ImageUtils {
 	 * @param image
 	 * @return
 	 */
-	public static BufferedImage  sharp(BufferedImage image) {
+	public static BufferedImage sharp(BufferedImage image) {
 		int height = image.getHeight();
 		int width = image.getWidth();
 		int[] pixels = new int[height * width];
@@ -124,14 +130,14 @@ public class ImageUtils {
 
 				int sharpBlue = Math.abs(blue6 - blue5)
 						+ Math.abs(blue8 - blue5);
-				if (sharpRed > 255) {
-					sharpRed = 255;
+				if (sharpRed > MAX) {
+					sharpRed = MAX;
 				}
-				if (sharpGreen > 255) {
-					sharpGreen = 255;
+				if (sharpGreen > MAX) {
+					sharpGreen = MAX;
 				}
-				if (sharpBlue > 255) {
-					sharpBlue = 255;
+				if (sharpBlue > MAX) {
+					sharpBlue = MAX;
 				}
 				tempPixels[i * width + j] = alpha << 24 | sharpRed << 16
 						| sharpGreen << 8 | sharpBlue;
@@ -312,15 +318,20 @@ public class ImageUtils {
 						+ blue8 + blue9) / 8;
 
 				int rgb = MAX << 24 | meanRed << 16 | meanGreen << 8 | meanBlue;
-				//pixels[(i - 1) * width + j - 1] = rgb;
+				// pixels[(i - 1) * width + j - 1] = rgb;
 				pixels[i * width + j] = rgb;
 			}
 		}
 		return pixelsToImage(pixels, width, height);
 	}
 
-	/** 线性灰度变换 */
-	public BufferedImage lineGrey(BufferedImage image) {
+	/**
+	 * 线性灰度转换
+	 * 
+	 * @param image
+	 * @return
+	 */
+	public static BufferedImage lineGray(BufferedImage image) {
 		int height = image.getHeight();
 		int width = image.getWidth();
 		int[] pixels = new int[height * width];
@@ -390,7 +401,7 @@ public class ImageUtils {
 
 		// 再做垂直方向上的伸缩变换
 		BufferedImage dst = new BufferedImage(newW, newH, image.getType());
-		//Graphics2D g = dst.createGraphics();
+		// Graphics2D g = dst.createGraphics();
 		g = dst.createGraphics();
 		for (int y = 0; y < newH; y++) {
 			g.setClip(0, y, newW, 1);
@@ -399,7 +410,8 @@ public class ImageUtils {
 		}
 		g.dispose();
 		try {
-			ImageIO.write(dst, "jpeg", new FileOutputStream(new File("C:\\images\\xxxxx.jpg")));
+			ImageIO.write(dst, "jpeg", new FileOutputStream(new File(
+					"C:\\images\\xxxxx.jpg")));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -420,10 +432,16 @@ public class ImageUtils {
 		int[] grays = new int[MAX + 1];
 		int width = image.getWidth();
 		int height = image.getHeight();
-		Raster raster = image.getData();
+		//Raster raster = image.getData();
 		int pixels[] = new int[width * height];
-		pixels = raster.getPixels(0, 0, width, height, pixels);
-
+		//pixels = raster.getPixels(0, 0, width, height, pixels);
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, width,
+				height, pixels, 0, width);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
 		for (int i = 0; i < pixels.length; i++) {
 			int rgb = pixels[i];
 			/*

@@ -41,7 +41,7 @@ public class ImageWindow extends JFrame {
 
 	public JMenuBar createMenuBar() {
 		JMenuBar menuBar;
-		JMenu menu, submenu;
+		JMenu menu;
 		JMenuItem menuItem;
 		JRadioButtonMenuItem rbMenuItem;
 		JCheckBoxMenuItem cbMenuItem;
@@ -210,31 +210,7 @@ public class ImageWindow extends JFrame {
 
 		// a submenu
 		menu.addSeparator();
-		submenu = new JMenu("A submenu");
-		submenu.setMnemonic(KeyEvent.VK_S);
-
-		menuItem = new JMenuItem("An item in the submenu");
-		menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2,
-				ActionEvent.ALT_MASK));
-		menuItem.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-		submenu.add(menuItem);
-
-		menuItem = new JMenuItem("Another item");
-		menuItem.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-		submenu.add(menuItem);
-		menu.add(submenu);
+		
 
 		// Build second menu in the menu bar.
 		menu = new JMenu("图片处理");
@@ -243,10 +219,7 @@ public class ImageWindow extends JFrame {
 				"This menu does nothing");
 		
 		menuItem = new JMenuItem("中值滤波");
-		menuItem.getAccessibleContext().setAccessibleDescription(
-				"This doesn't really do anything");
 		menuItem.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
 				ImageApp.filter(ImageUtils.MEDIAN_FILTER);
 			}
@@ -254,17 +227,49 @@ public class ImageWindow extends JFrame {
 		menu.add(menuItem);
 		
 		menuItem = new JMenuItem("均值滤波");
-		menuItem.getAccessibleContext().setAccessibleDescription(
-				"This doesn't really do anything");
 		menuItem.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
 				ImageApp.filter(ImageUtils.MEAN_FILTER);
 			}
 		});
 		menu.add(menuItem);
-
 		
+		menuItem = new JMenuItem("灰度");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ImageUtils.GRAY_FILTER);
+			}
+		});
+		menu.add(menuItem);
+		
+		
+		JMenu submenu = new JMenu("二值化");
+		menu.add(submenu);
+		menuItem = new JMenuItem("MeanThreshold");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ImageUtils.MeanThreshold);
+			}
+		});
+		submenu.add(menuItem);
+		menuItem = new JMenuItem("PTileThreshold");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		submenu.add(menuItem);
+		menuItem = new JMenuItem("MinimumThreshold");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		submenu.add(menuItem);
+		menuItem = new JMenuItem("IntermodesThreshold");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+			}
+		});
+		submenu.add(menuItem);
 		menuBar.add(menu);
 
 		return menuBar;

@@ -49,6 +49,13 @@ public final class ImageApp {
 		case ImageUtils.MEDIAN_FILTER:
 			imageApp.repaint(ImageUtils.medianFilter(imageApp.getSrcImage()));
 			break;
+		case ImageUtils.GRAY_FILTER:
+			imageApp.repaint(ImageUtils.grayFilter(imageApp.getSrcImage()));
+			break;
+		case ImageUtils.MeanThreshold:
+			int[] pix = ImageUtils.gray(imageApp.getSrcImage());
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(), ImageUtils.getMeanThreshold(pix)));
+			break;
 		default:
 			break;
 		}
