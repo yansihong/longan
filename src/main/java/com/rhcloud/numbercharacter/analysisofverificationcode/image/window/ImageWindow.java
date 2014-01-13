@@ -17,6 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
@@ -118,12 +119,49 @@ public class ImageWindow extends JFrame {
 		menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2,
 				ActionEvent.CTRL_MASK));
 		menuItem.getAccessibleContext().setAccessibleDescription(
-				"This doesn't really do anything");
+				"save the image");
 		menuItem.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+				JFileChooser fc = new JFileChooser();
+				fc.setAcceptAllFileFilterUsed(true);
+				fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				fc.setApproveButtonText("确定");
+				fc.setFileFilter(new FileFilter() {
 
+					@Override
+					public String getDescription() {
+						return "jpg;jpeg;png";
+					}
+
+					@Override
+					public boolean accept(File f) {
+						if (f.isDirectory())
+							return true;
+						String ext = null;
+						String s = f.getName();
+						int i = s.lastIndexOf('.');
+						if (i > 0 && i < s.length() - 1) {
+							ext = s.substring(i + 1).toLowerCase();
+						}
+						if (ext != null)
+							if (ext.equals("jpg") || ext.equals("jpeg")
+									|| ext.equals("png")) {
+								return true;
+							} else {
+								return false;
+							}
+						return false;
+					}
+				});
+				fc.showSaveDialog(null);
+				File file = fc.getSelectedFile();
+				LOG.info("The save image:"+file);
+				try {
+					ImageApp.saveImage(file);
+				} catch (IOException e1) {
+					JOptionPane.showMessageDialog(null, "文件错误~", "提示：",
+							JOptionPane.WARNING_MESSAGE);
+				}
 			}
 		});
 		menu.add(menuItem);
@@ -162,10 +200,7 @@ public class ImageWindow extends JFrame {
 		rbMenuItem.setMnemonic(KeyEvent.VK_R);
 		group.add(rbMenuItem);
 		rbMenuItem.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 		menu.add(rbMenuItem);
@@ -174,10 +209,7 @@ public class ImageWindow extends JFrame {
 		rbMenuItem.setMnemonic(KeyEvent.VK_O);
 		group.add(rbMenuItem);
 		rbMenuItem.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 		menu.add(rbMenuItem);
@@ -187,10 +219,7 @@ public class ImageWindow extends JFrame {
 		cbMenuItem = new JCheckBoxMenuItem("A check box menu item");
 		cbMenuItem.setMnemonic(KeyEvent.VK_C);
 		cbMenuItem.addItemListener(new ItemListener() {
-
 			public void itemStateChanged(ItemEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 		menu.add(cbMenuItem);
@@ -198,10 +227,7 @@ public class ImageWindow extends JFrame {
 		cbMenuItem = new JCheckBoxMenuItem("Another one");
 		cbMenuItem.setMnemonic(KeyEvent.VK_H);
 		cbMenuItem.addItemListener(new ItemListener() {
-
 			public void itemStateChanged(ItemEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 		menu.add(cbMenuItem);
@@ -241,7 +267,6 @@ public class ImageWindow extends JFrame {
 
 		JMenu submenu = new JMenu("二值化");
 		menu.add(submenu);
-		
 		ThresholdEnum[] es = ThresholdEnum.values();
 		for (ThresholdEnum e : es) {
 			menuItem = new JMenuItem(e.name());
@@ -253,6 +278,24 @@ public class ImageWindow extends JFrame {
 			});
 			submenu.add(menuItem);
 		}
+		
+		
+		
+		menuItem = new JMenuItem("膨胀(erode)");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ImageUtils.ERODE_FILTER);
+			}
+		});
+		menu.add(menuItem);	
+		
+		menuItem = new JMenuItem("腐蚀(dilage)");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ImageUtils.DILATE_FILTER);
+			}
+		});
+		menu.add(menuItem);	
 		
 		menuBar.add(menu);
 

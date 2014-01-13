@@ -51,6 +51,12 @@ public final class ImageApp {
 		case ImageUtils.GRAY_FILTER:
 			imageApp.repaint(ImageUtils.grayFilter(imageApp.getSrcImage()));
 			break;
+		case ImageUtils.DILATE_FILTER:
+			imageApp.repaint(ImageUtils.dilate(imageApp.getSrcImage()));
+			break;
+		case ImageUtils.ERODE_FILTER:
+			imageApp.repaint(ImageUtils.erode(imageApp.getSrcImage()));
+			break;
 		default:
 			break;
 		}
@@ -131,11 +137,24 @@ public final class ImageApp {
 		imageApp = new ImageApp(frame);
 	}
 
+	/**
+	 * 打开图片
+	 * 
+	 * @param file
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public static void openImage(File file) throws FileNotFoundException,
 			IOException {
 		BufferedImage image = ImageIO.read(new FileInputStream(file));
+		LOG.info("image type"+image.getType());
 		LOG.info("Width:" + image.getWidth() + "\theight:" + image.getHeight());
 		imageApp.repaint(image);
+	}
+
+	public static void saveImage(File file) throws IOException {
+		LOG.info("save..."+imageApp.getSrcImage().getType());
+		ImageIO.write(imageApp.getSrcImage(), "jpg", file);
 	}
 
 	static class ImagePanel extends JPanel {

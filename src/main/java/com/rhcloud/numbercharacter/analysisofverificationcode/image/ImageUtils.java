@@ -1,5 +1,6 @@
 package com.rhcloud.numbercharacter.analysisofverificationcode.image;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -18,6 +19,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.hamcrest.CoreMatchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +27,10 @@ public class ImageUtils {
 
 	public static final Logger LOG = LoggerFactory.getLogger(ImageUtils.class);
 	public static final int MAX = 255;
+	private static final Color WHITE_32 = Color.WHITE;
+	// private static final int BLACK_32 = (255 << 24) | (0 << 16) | (0 << 8) |
+	// 0;
+	private static final Color BLACK_32 = Color.BLACK;
 	/**
 	 * 中值滤波
 	 */
@@ -35,16 +41,26 @@ public class ImageUtils {
 	public static final int MEAN_FILTER = 11;
 
 	public static final int LINE_GRAY = 12;
-	
+
 	public static final int GRAY_FILTER = 13;
-	
+
+	/**
+	 * 膨胀
+	 */
+	public static final int ERODE_FILTER = 20;
+	/**
+	 * 腐蚀
+	 */
+	public static final int DILATE_FILTER = 21;
+
 	/**
 	 * 二值化
 	 * 
 	 * @param image
 	 * @param grey
 	 */
-	public static BufferedImage binary(BufferedImage image, int grey) {
+	public static BufferedImage binary(BufferedImage image, int gray) {
+		LOG.info("binary:" + gray);
 		int height = image.getHeight();
 		int width = image.getWidth();
 		int[] pixels = new int[height * width];
@@ -59,24 +75,51 @@ public class ImageUtils {
 		for (int i = 0; i < width * height; i++) {
 			int red, green, blue;
 			int alpha = cm.getAlpha(pixels[i]);
-			if (cm.getRed(pixels[i]) > grey) {
-				red = MAX;
+			int rgb = pixels[i];
+			/*
+			 * 使用getRGB(i,j)获取的该点的颜色值是ARGB， 而在实际应用中使用的是RGB，所以需要将ARGB转化成RGB，
+			 * 即bufImg.getRGB(i, j) & 0xFFFFFF。
+			 */
+			// int r = (rgb & 0xff0000) >> 16;
+			// int g = (rgb & 0xff00) >> 8;
+			// int b = (rgb & 0xff);
+			int r = cm.getRed(rgb);
+			int g = cm.getGreen(rgb);
+			int b = cm.getBlue(rgb);
+			int _gray = (int) (r * 0.3 + g * 0.59 + b * 0.11); // 计算灰度值
+			// if (cm.getRed(pixels[i]) > gray) {
+			// red = MAX;
+			// } else {
+			// red = 0;
+			// }
+			// if (cm.getGreen(pixels[i]) > gray) {
+			// green = MAX;
+			// } else {
+			// green = 0;
+			// }
+			// if (cm.getBlue(pixels[i]) > gray) {
+			// blue = MAX;
+			// } else {
+			// blue = 0;
+			// }
+			if (_gray > gray) {
+				pixels[i] = WHITE_32.getRGB();
 			} else {
-				red = 0;
+				pixels[i] = BLACK_32.getRGB();
 			}
-			if (cm.getGreen(pixels[i]) > grey) {
-				green = MAX;
-			} else {
-				green = 0;
-			}
-			if (cm.getBlue(pixels[i]) > grey) {
-				blue = MAX;
-			} else {
-				blue = 0;
-			}
-			pixels[i] = alpha << 24 | red << 16 | green << 8 | blue;
+			// pixels[i] = alpha << 24 | red << 16 | green << 8 | blue;
 		}
-		return pixelsToImage(pixels, width, height);
+		for (int i = 0; i < pixels.length; i++) {
+			int r = cm.getRed(pixels[i]);
+			int g = cm.getGreen(pixels[i]);
+			int b = cm.getBlue(pixels[i]);
+			if ((r != 255 && r != 0) || (g != 255 && g != 0)
+					|| (b != 255 && b != 0)) {
+				System.out.println("r=" + r + "\tg=" + g + "\tb=" + b);
+			}
+		}
+		return pixelsToImage(pixels, width, height,
+				BufferedImage.TYPE_BYTE_BINARY);
 	}
 
 	/**
@@ -406,16 +449,6 @@ public class ImageUtils {
 			g.drawImage(tmp, 0, y - y * srcH / newH, null);
 		}
 		g.dispose();
-		try {
-			ImageIO.write(dst, "jpeg", new FileOutputStream(new File(
-					"C:\\images\\xxxxx.jpg")));
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		return dst;
 	}
 
@@ -429,9 +462,9 @@ public class ImageUtils {
 		int[] grays = new int[MAX + 1];
 		int width = image.getWidth();
 		int height = image.getHeight();
-		//Raster raster = image.getData();
+		// Raster raster = image.getData();
 		int pixels[] = new int[width * height];
-		//pixels = raster.getPixels(0, 0, width, height, pixels);
+		// pixels = raster.getPixels(0, 0, width, height, pixels);
 		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, width,
 				height, pixels, 0, width);
 		try {
@@ -878,16 +911,161 @@ public class ImageUtils {
 		return Threshold;
 	}
 
+	/**
+	 * 腐蚀
+	 * 
+	 * @param image
+	 * @return
+	 */
+	public static BufferedImage dilate(BufferedImage image) {
+		int height = image.getHeight();
+		int width = image.getWidth();
+		int[] pixels = new int[height * width];
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, width,
+				height, pixels, 0, width);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
+		int[] erodePix = new int[height * width];
+		for (int u = 0; u < height - 1; u++)
+			for (int v = 0; v < width - 1; v++)
+				erodePix[width * u + v] = WHITE_32.getRGB();
+
+		for (int u = 1; u < height - 2; u++)
+			for (int v = 1; v < width - 2; v++)
+				if (erode_area8(pixels, u, v, WHITE_32.getRGB(), width))
+					erodePix[u * width + v] = WHITE_32.getRGB();
+				else
+					erodePix[u * width + v] = BLACK_32.getRGB();
+		return pixelsToImage(erodePix, width, height,
+				BufferedImage.TYPE_3BYTE_BGR);
+	}
+
+	private static boolean erode_area8(int[] pix, int u, int v, int foreground,
+			int w) {
+		if (pix[(u - 1) * w + v - 1] == foreground
+				&& pix[(u - 1) * w + v] == foreground
+				&& pix[(u - 1) * w + v + 1] == foreground
+				&& pix[u * w + v + 1] == foreground
+				&& pix[u * w + v] == foreground
+				&& pix[u * w + v - 1] == foreground
+				&& pix[(u + 1) * w + v - 1] == foreground
+				&& pix[(u + 1) * w + v] == foreground
+				&& pix[(u + 1) * w + v + 1] == foreground)
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * 膨胀
+	 * @param image
+	 * @return
+	 */
+	public static BufferedImage erode(BufferedImage image) {
+		int height = image.getHeight();
+		int width = image.getWidth();
+		int[] pixels = new int[height * width];
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, width,
+				height, pixels, 0, width);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
+		int[] dilatePix = new int[width * height];
+		for (int u = 0; u < height - 1; u++)
+			for (int v = 0; v < width - 1; v++)
+				dilatePix[u * width + v] = BLACK_32.getRGB();// Ϳ��
+
+		for (int u = 1; u < height - 2; u++)
+			for (int v = 1; v < width - 2; v++) {
+				int foreground = WHITE_32.getRGB();
+				if (pixels[u * width + v] == foreground) {
+					dilatePix[(u - 1) * width + v - 1] = foreground;
+					dilatePix[(u - 1) * width + v] = foreground;
+					dilatePix[(u - 1) * width + v + 1] = foreground;
+					dilatePix[u * width + v + 1] = foreground;
+					dilatePix[u * width + v] = foreground; // ���ĵ�
+					dilatePix[u * width + v - 1] = foreground;
+					dilatePix[(u + 1) * width + v - 1] = foreground;
+					dilatePix[(u + 1) * width + v] = foreground;
+					dilatePix[(u + 1) * width + v + 1] = foreground;
+				}
+			}
+		return pixelsToImage(dilatePix, width, height,
+				BufferedImage.TYPE_3BYTE_BGR);
+	}
+
 	private static BufferedImage pixelsToImage(int[] pixels, int width,
-			int height) {
+			int height, int type) {
 		Image image = Toolkit.getDefaultToolkit().createImage(
 				new MemoryImageSource(width, height, pixels, 0, width));
+		BufferedImage bufferedImage = new BufferedImage(width, height,
+				BufferedImage.TYPE_3BYTE_BGR);
+		// Graphics2D g = bufferedImage.createGraphics();
+		// g.drawImage(image, 0, 0, null);
+		ColorModel cm = ColorModel.getRGBdefault();
+		for (int h = 0; h < height; h++)
+			for (int w = 0; w < width; w++) {
+				// int rgb = cm.getRGB(pixels[h*width+w]);
+				// if (pixels[h * width + w] != WHITE_32.getRGB()
+				// && pixels[h * width + w] != BLACK_32.getRGB()) {
+				// System.out.println(pixels[h * width + w]);
+				// }
+				// if (pixels[h * width + w] == WHITE_32.getRGB())
+				// bufferedImage.setRGB(w, h, 0xFFFFFF);
+				// else
+				// bufferedImage.setRGB(w, h, 0x000000);
+				bufferedImage.setRGB(w, h, pixels[h * width + w]);
+			}
 
-		BufferedImage bufferedImage = new BufferedImage(image.getWidth(null),
-				image.getHeight(null), BufferedImage.TYPE_INT_RGB);
-		Graphics2D g = bufferedImage.createGraphics();
-		g.drawImage(image, 0, 0, null);
+		// for (int i = 0; i < pixels.length; i++) {
+		// int r = cm.getRed(pixels[i]);
+		// int g = cm.getGreen(pixels[i]);
+		// int b = cm.getBlue(pixels[i]);
+		// if ((r!=255&&r!=0)||(g!=255&&g!=0)||(b!=255&&b!=0)){
+		// System.out.println("r="+r+"\tg="+g+"\tb="+b);
+		// }
+		// }
+		// try {
+		// testimage(bufferedImage);
+		// ImageIO.write(bufferedImage, "png", new
+		// File("C:\\images\\0001.png"));
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
 		return bufferedImage;
+	}
+
+	private static void testimage(BufferedImage image) {
+		int height = image.getHeight();
+		int width = image.getWidth();
+		int[] pixels = new int[height * width];
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, width,
+				height, pixels, 0, width);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
+		ColorModel cm = ColorModel.getRGBdefault();
+		for (int i = 0; i < pixels.length; i++) {
+			int r = cm.getRed(pixels[i]);
+			int g = cm.getGreen(pixels[i]);
+			int b = cm.getBlue(pixels[i]);
+			if ((r != 255 && r != 0) || (g != 255 && g != 0)
+					|| (b != 255 && b != 0)) {
+				System.out.println("r=" + r + "\tg=" + g + "\tb=" + b);
+			}
+		}
+	}
+
+	private static BufferedImage pixelsToImage(int[] pixels, int width,
+			int height) {
+		return pixelsToImage(pixels, width, height, BufferedImage.TYPE_INT_RGB);
 	}
 
 }
