@@ -11,7 +11,6 @@ import java.awt.image.ColorConvertOp;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -39,8 +38,6 @@ public class ImageUtils {
 	
 	public static final int GRAY_FILTER = 13;
 	
-	public static final int MeanThreshold = 14;
-
 	/**
 	 * 二值化
 	 * 
@@ -604,7 +601,7 @@ public class ImageUtils {
 	 * @param HistGram
 	 * @return
 	 */
-	public static int GetIterativeBestThreshold(int[] HistGram) {
+	public static int getIterativeBestThreshold(int[] HistGram) {
 		int X, Iter = 0;
 		int MeanValueOne, MeanValueTwo, SumOne, SumTwo, SumIntegralOne, SumIntegralTwo;
 		int MinValue, MaxValue;
@@ -655,7 +652,7 @@ public class ImageUtils {
 	 * @param HistGram
 	 * @return
 	 */
-	public static int GetOSTUThreshold(int[] HistGram) {
+	public static int getOSTUThreshold(int[] HistGram) {
 		int Y, Amount = 0;
 		int PixelBack = 0, PixelFore = 0, PixelIntegralBack = 0, PixelIntegralFore = 0, PixelIntegral = 0;
 		double OmegaBack, OmegaFore, MicroBack, MicroFore, SigmaB, Sigma; // 类间方差;
@@ -705,7 +702,7 @@ public class ImageUtils {
 	 * @param HistGram
 	 * @return
 	 */
-	public static int Get1DMaxEntropyThreshold(int[] HistGram) {
+	public static int get1DMaxEntropyThreshold(int[] HistGram) {
 		int X, Y, Amount = 0;
 		double[] HistGramD = new double[256];
 		double SumIntegral, EntropyBack, EntropyFore, MaxEntropy;
@@ -756,7 +753,7 @@ public class ImageUtils {
 	 * @param HistGram
 	 * @return
 	 */
-	public static byte GetMomentPreservingThreshold(int[] HistGram) {
+	public static byte getMomentPreservingThreshold(int[] HistGram) {
 		int Y = 0, Index = 0, Amount = 0;
 		double[] Avec = new double[256];
 		double X2, X1, X0, Min;
@@ -825,7 +822,7 @@ public class ImageUtils {
 	 * @param HistGram
 	 * @return
 	 */
-	public static int GetKittlerMinError(int[] HistGram) {
+	public static int getKittlerMinError(int[] HistGram) {
 		int X, Y;
 		int MinValue, MaxValue;
 		int Threshold;

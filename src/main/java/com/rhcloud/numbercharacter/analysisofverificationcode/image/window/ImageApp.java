@@ -3,7 +3,6 @@ package com.rhcloud.numbercharacter.analysisofverificationcode.image.window;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.LayoutManager;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -14,12 +13,12 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rhcloud.numbercharacter.analysisofverificationcode.image.ImageUtils;
+import com.rhcloud.numbercharacter.analysisofverificationcode.image.ThresholdEnum;
 
 public final class ImageApp {
 
@@ -52,9 +51,49 @@ public final class ImageApp {
 		case ImageUtils.GRAY_FILTER:
 			imageApp.repaint(ImageUtils.grayFilter(imageApp.getSrcImage()));
 			break;
-		case ImageUtils.MeanThreshold:
-			int[] pix = ImageUtils.gray(imageApp.getSrcImage());
-			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(), ImageUtils.getMeanThreshold(pix)));
+		default:
+			break;
+		}
+	}
+
+	public static void filter(ThresholdEnum e) {
+		int[] pix = ImageUtils.gray(imageApp.getSrcImage());
+		switch (e) {
+		case IntermodesThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getIntermodesThreshold(pix)));
+			break;
+		case KittlerMinError:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getKittlerMinError(pix)));
+			break;
+		case IterativeBestThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getIterativeBestThreshold(pix)));
+			break;
+		case MeanThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getMeanThreshold(pix)));
+			break;
+		case MinimumThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getMinimumThreshold(pix)));
+			break;
+		case MomentPreservingThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getMomentPreservingThreshold(pix)));
+			break;
+		case OneDMaxEntropyThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.get1DMaxEntropyThreshold(pix)));
+			break;
+		case OSTUThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getOSTUThreshold(pix)));
+			break;
+		case PTileThreshold:
+			imageApp.repaint(ImageUtils.binary(imageApp.getSrcImage(),
+					ImageUtils.getPTileThreshold(pix)));
 			break;
 		default:
 			break;

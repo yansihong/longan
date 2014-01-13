@@ -1,10 +1,6 @@
 package com.rhcloud.numbercharacter.analysisofverificationcode.image.window;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.LayoutManager;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -23,12 +19,14 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileFilter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rhcloud.numbercharacter.analysisofverificationcode.image.ImageUtils;
+import com.rhcloud.numbercharacter.analysisofverificationcode.image.ThresholdEnum;
 
 public class ImageWindow extends JFrame {
 
@@ -156,7 +154,7 @@ public class ImageWindow extends JFrame {
 			}
 		});
 		menu.add(menuItem);
-		
+
 		ButtonGroup group = new ButtonGroup();
 
 		rbMenuItem = new JRadioButtonMenuItem("A radio button menu item");
@@ -210,14 +208,13 @@ public class ImageWindow extends JFrame {
 
 		// a submenu
 		menu.addSeparator();
-		
 
 		// Build second menu in the menu bar.
 		menu = new JMenu("图片处理");
 		menu.setMnemonic(KeyEvent.VK_N);
 		menu.getAccessibleContext().setAccessibleDescription(
 				"This menu does nothing");
-		
+
 		menuItem = new JMenuItem("中值滤波");
 		menuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -225,7 +222,7 @@ public class ImageWindow extends JFrame {
 			}
 		});
 		menu.add(menuItem);
-		
+
 		menuItem = new JMenuItem("均值滤波");
 		menuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -233,7 +230,7 @@ public class ImageWindow extends JFrame {
 			}
 		});
 		menu.add(menuItem);
-		
+
 		menuItem = new JMenuItem("灰度");
 		menuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -241,50 +238,81 @@ public class ImageWindow extends JFrame {
 			}
 		});
 		menu.add(menuItem);
-		
-		
+
 		JMenu submenu = new JMenu("二值化");
 		menu.add(submenu);
-		menuItem = new JMenuItem("MeanThreshold");
-		menuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				ImageApp.filter(ImageUtils.MeanThreshold);
-			}
-		});
-		submenu.add(menuItem);
-		menuItem = new JMenuItem("PTileThreshold");
-		menuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
-		submenu.add(menuItem);
-		menuItem = new JMenuItem("MinimumThreshold");
-		menuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
-		submenu.add(menuItem);
-		menuItem = new JMenuItem("IntermodesThreshold");
-		menuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-			}
-		});
-		submenu.add(menuItem);
+		
+		ThresholdEnum[] es = ThresholdEnum.values();
+		for (ThresholdEnum e : es) {
+			menuItem = new JMenuItem(e.name());
+			final ThresholdEnum x = e;
+			menuItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					ImageApp.filter(x);
+				}
+			});
+			submenu.add(menuItem);
+		}
+		
 		menuBar.add(menu);
 
 		return menuBar;
 	}
 
 	public static void main(String[] args) {
+		// JFrame.setDefaultLookAndFeelDecorated(true);
 		final ImageWindow iw = new ImageWindow();
+		final Font SystemFont = new Font("微软雅黑", Font.PLAIN, 14);
+		final Font DataFont = new Font("simsun", Font.PLAIN, 14);
+		javax.swing.plaf.FontUIResource fontResource = new javax.swing.plaf.FontUIResource(
+				SystemFont);
+		javax.swing.plaf.FontUIResource datafontResource = new javax.swing.plaf.FontUIResource(
+				DataFont);
 		ImageApp.initImageApp(iw);
+		UIManager.put("Button.font", fontResource);
+		UIManager.put("ToggleButton.font", fontResource);
+		UIManager.put("RadioButton.font", fontResource);
+		UIManager.put("CheckBox.font", fontResource);
+		UIManager.put("ColorChooser.font", fontResource);
+		UIManager.put("ToggleButton.font", fontResource);
+		UIManager.put("ComboBox.font", fontResource);
+		UIManager.put("ComboBoxItem.font", fontResource);
+		UIManager.put("InternalFrame.titleFont", fontResource);
+		UIManager.put("Label.font", fontResource);
+		UIManager.put("List.font", datafontResource);
+		UIManager.put("MenuBar.font", fontResource);
+		UIManager.put("Menu.font", fontResource);
+		UIManager.put("MenuItem.font", fontResource);
+		UIManager.put("RadioButtonMenuItem.font", fontResource);
+		UIManager.put("CheckBoxMenuItem.font", fontResource);
+		UIManager.put("PopupMenu.font", fontResource);
+		UIManager.put("OptionPane.font", fontResource);
+		UIManager.put("Panel.font", fontResource);
+		UIManager.put("ProgressBar.font", fontResource);
+		UIManager.put("ScrollPane.font", fontResource);
+		UIManager.put("Viewport", fontResource);
+		UIManager.put("TabbedPane.font", fontResource);
+		UIManager.put("TableHeader.font", fontResource);
+		UIManager.put("TextField.font", datafontResource);
+		UIManager.put("PasswordFiled.font", datafontResource);
+		UIManager.put("TextArea.font", datafontResource);
+		UIManager.put("TextPane.font", datafontResource);
+		UIManager.put("EditorPane.font", fontResource);
+		UIManager.put("TitledBorder.font", fontResource);
+		UIManager.put("ToolBar.font", fontResource);
+		UIManager.put("ToolTip.font", fontResource);
+		UIManager.put("Tree.font", datafontResource);
+		UIManager.put("TabbedPane.font", datafontResource);
+		UIManager.put("ComboBox.font", datafontResource);
+		UIManager.put("ProgressBar.repaintInterval", new Integer(150));
+		UIManager.put("ProgressBar.cycleTime", new Integer(1050));
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 
 			public void run() {
 				iw.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				iw.setJMenuBar(iw.createMenuBar());
-				LayoutManager layout = new FlowLayout(FlowLayout.CENTER);
-				//iw.setLayout(layout);
+				// LayoutManager layout = new FlowLayout(FlowLayout.CENTER);
+				// iw.setLayout(layout);
 				LOG.info(iw.getLayout().toString());
 				iw.setSize(800, 640);
 				iw.setLocationRelativeTo(null);
