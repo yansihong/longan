@@ -3,6 +3,7 @@ package com.rhcloud.numbercharacter.analysisofverificationcode.image;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
@@ -12,14 +13,8 @@ import java.awt.image.ColorConvertOp;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.util.Vector;
 
-import javax.imageio.ImageIO;
-
-import org.hamcrest.CoreMatchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -961,6 +956,7 @@ public class ImageUtils {
 
 	/**
 	 * 膨胀
+	 * 
 	 * @param image
 	 * @return
 	 */
@@ -976,19 +972,21 @@ public class ImageUtils {
 			LOG.error(e.getMessage());
 		}
 		int[] dilatePix = new int[width * height];
+		//全部设置为黑色
 		for (int u = 0; u < height - 1; u++)
 			for (int v = 0; v < width - 1; v++)
 				dilatePix[u * width + v] = BLACK_32.getRGB();// Ϳ��
 
+		//如果某个像素为前景色？则周围9个像素全部置为该颜色
+		int foreground = WHITE_32.getRGB();
 		for (int u = 1; u < height - 2; u++)
 			for (int v = 1; v < width - 2; v++) {
-				int foreground = WHITE_32.getRGB();
 				if (pixels[u * width + v] == foreground) {
 					dilatePix[(u - 1) * width + v - 1] = foreground;
 					dilatePix[(u - 1) * width + v] = foreground;
 					dilatePix[(u - 1) * width + v + 1] = foreground;
 					dilatePix[u * width + v + 1] = foreground;
-					dilatePix[u * width + v] = foreground; // ���ĵ�
+					dilatePix[u * width + v] = foreground;
 					dilatePix[u * width + v - 1] = foreground;
 					dilatePix[(u + 1) * width + v - 1] = foreground;
 					dilatePix[(u + 1) * width + v] = foreground;
@@ -997,6 +995,144 @@ public class ImageUtils {
 			}
 		return pixelsToImage(dilatePix, width, height,
 				BufferedImage.TYPE_3BYTE_BGR);
+	}
+
+	public static BufferedImage thinHilditch(BufferedImage image) {
+		int height = image.getHeight();
+		int width = image.getWidth();
+		int[] pixels = new int[height * width];
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, width,
+				height, pixels, 0, width);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
+		ColorModel cm = ColorModel.getRGBdefault();
+		int[][] thin = new int[height][width];
+		//初始化二维数组，假定白色为背景色，黑色为前景色
+		for (int i = 0; i < height; i++) {
+			for(int j=0; j< width; j++){
+				thin[i][j] = cm.getRGB(pixels[i*width+j])==WHITE_32.getRGB()?0:1;
+			}
+		}
+		Vector<Point> mark = new Vector<Point>();// 用于标记要删除的点的x和y坐标；
+		boolean IsModified = true;
+		int[] nnb = new int[8];
+		// 去掉边框像素
+		for (int i = 0; i < width; i++) {
+			thin[0][i] = 0;
+			thin[height - 1][i] = 0;
+		}
+		for (int i = 0; i < height; i++) {
+			thin[i][0] = 0;
+			thin[i][width - 1] = 0;
+		}
+
+		do {
+			IsModified = false;
+
+			// 每次周期循环判断前，先将数组中被标记的点变成0；
+			for (int i = 0; i < mark.size(); i++) {
+				Point p = mark.get(i);
+				thin[p.x][p.y] = 0;
+			}
+			mark.clear();// 将向量清空
+			int[][] nb = new int[3][3];
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++) {
+					// 条件1必须为黑点
+					if (thin[i][j] != 1)
+						continue;
+					// 赋值3*3领域
+					for (int m = 0; m < 3; m++) {
+						for (int n = 0; n < 3; n++) {
+							nb[m][n] = thin[i - 1 + m][j - 1 + n];
+						}
+					}
+					// 复制
+					nnb[0] = nb[1][2];
+					nnb[1] = nb[0][2];
+					nnb[2] = nb[0][1];
+					nnb[3] = nb[0][0];
+					nnb[4] = nb[1][0];
+					nnb[5] = nb[2][0];
+					nnb[6] = nb[2][1];
+					nnb[7] = nb[2][2];
+					// 条件2：p0,p2,p4,p6 不皆为前景点 ，4邻域点不能全为1；
+					if (nnb[0] == 1 && nnb[2] == 1 && nnb[4] == 1
+							&& nnb[6] == 1) {
+						continue;
+					}
+					// 条件3: p0~p7至少两个是前景点 ，8邻域至少有2个点为1；
+					int icount = 0;
+					for (int ii = 0; ii < 8; ii++) {
+						icount += nnb[ii];
+					}
+					if (icount < 2) {
+						continue;
+					}
+					// 条件4：联结数等于1
+					if (1 != detectConnectivity(nnb)) {
+						continue;
+					}
+					// 条件5: 假设p2已标记删除，则令p2为背景，不改变p的联结数
+					Point p2 = new Point(i - 1, j);
+					if (mark.indexOf(p2) != -1) // 如果在向量mark中找到点p2
+					{
+						nnb[2] = 0;
+						if (1 != detectConnectivity(nnb)) {
+							nnb[2] = 1;
+							continue;
+						}
+						nnb[2] = 1;
+					}
+
+					// 条件6: 假设p4已标记删除，则令p4为背景，不改变p的联结数
+					Point p4 = new Point(i, j - 1);
+					if (mark.indexOf(p4) == -1) // 如果p4没有标记将p点标记
+					{
+						Point p = new Point(i, j);
+						mark.add(p);
+						IsModified = true;
+						continue;
+					}
+
+					// 如果p4 标记了，先把点p4变成0
+					nnb[4] = 0;
+					if (1 == detectConnectivity(nnb)) {// 如果p的连接数没有改变；将p标记
+						Point p = new Point(i, j);
+						mark.add(p);
+						IsModified = true;
+					}
+
+				}
+			}
+		} while (IsModified);
+		
+		for (int i = 0; i < height; i++) {
+			for(int j=0; j< width; j++){
+				//thin[i][j] = cm.getRGB(pixels[i*width+j])==WHITE_32.getRGB()?0:1;
+				pixels[i*width+j] = thin[i][j]==0? WHITE_32.getRGB():BLACK_32.getRGB();
+			}
+		}
+		return pixelsToImage(pixels, width, height);
+	}
+	
+	private static int detectConnectivity(int[] a) {
+		int size = 0;
+		int a0, a1, a2, a3, a4, a5, a6, a7;
+		a0 = 1 - a[0];
+		a1 = 1 - a[1];
+		a2 = 1 - a[2];
+		a3 = 1 - a[3];
+		a4 = 1 - a[4];
+		a5 = 1 - a[5];
+		a6 = 1 - a[6];
+		a7 = 1 - a[7];
+		size = a0 - a0 * a1 * a2 + a2 - a2 * a3 * a4 + a4 - a4 * a5 * a6 + a6
+				- a6 * a7 * a0;
+		return size;
 	}
 
 	private static BufferedImage pixelsToImage(int[] pixels, int width,

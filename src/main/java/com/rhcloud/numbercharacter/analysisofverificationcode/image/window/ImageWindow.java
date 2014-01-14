@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rhcloud.numbercharacter.analysisofverificationcode.image.ImageUtils;
+import com.rhcloud.numbercharacter.analysisofverificationcode.image.ThinEnum;
 import com.rhcloud.numbercharacter.analysisofverificationcode.image.ThresholdEnum;
 
 public class ImageWindow extends JFrame {
@@ -279,6 +280,15 @@ public class ImageWindow extends JFrame {
 			submenu.add(menuItem);
 		}
 		
+		submenu = new JMenu("细化");
+		menu.add(submenu);
+		menuItem = new JMenuItem("Hilditch");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ThinEnum.Hilditch);
+			}
+		});
+		submenu.add(menuItem);
 		
 		
 		menuItem = new JMenuItem("膨胀(erode)");

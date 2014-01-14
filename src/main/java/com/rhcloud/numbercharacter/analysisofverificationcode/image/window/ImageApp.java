@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.rhcloud.numbercharacter.analysisofverificationcode.image.ImageUtils;
+import com.rhcloud.numbercharacter.analysisofverificationcode.image.ThinEnum;
 import com.rhcloud.numbercharacter.analysisofverificationcode.image.ThresholdEnum;
 
 public final class ImageApp {
@@ -56,6 +57,16 @@ public final class ImageApp {
 			break;
 		case ImageUtils.ERODE_FILTER:
 			imageApp.repaint(ImageUtils.erode(imageApp.getSrcImage()));
+			break;
+		default:
+			break;
+		}
+	}
+	
+	public static void filter(ThinEnum e){
+		switch (e) {
+		case Hilditch:
+			imageApp.repaint(ImageUtils.thinHilditch(imageApp.getSrcImage()));
 			break;
 		default:
 			break;
