@@ -972,12 +972,12 @@ public class ImageUtils {
 			LOG.error(e.getMessage());
 		}
 		int[] dilatePix = new int[width * height];
-		//全部设置为黑色
+		// 全部设置为黑色
 		for (int u = 0; u < height - 1; u++)
 			for (int v = 0; v < width - 1; v++)
 				dilatePix[u * width + v] = BLACK_32.getRGB();// Ϳ��
 
-		//如果某个像素为前景色？则周围9个像素全部置为该颜色
+		// 如果某个像素为前景色？则周围9个像素全部置为该颜色
 		int foreground = WHITE_32.getRGB();
 		for (int u = 1; u < height - 2; u++)
 			for (int v = 1; v < width - 2; v++) {
@@ -1010,10 +1010,11 @@ public class ImageUtils {
 		}
 		ColorModel cm = ColorModel.getRGBdefault();
 		int[][] thin = new int[height][width];
-		//初始化二维数组，假定白色为背景色，黑色为前景色
+		// 初始化二维数组，假定白色为背景色，黑色为前景色
 		for (int i = 0; i < height; i++) {
-			for(int j=0; j< width; j++){
-				thin[i][j] = cm.getRGB(pixels[i*width+j])==WHITE_32.getRGB()?0:1;
+			for (int j = 0; j < width; j++) {
+				thin[i][j] = cm.getRGB(pixels[i * width + j]) == WHITE_32
+						.getRGB() ? 0 : 1;
 			}
 		}
 		Vector<Point> mark = new Vector<Point>();// 用于标记要删除的点的x和y坐标；
@@ -1109,16 +1110,181 @@ public class ImageUtils {
 				}
 			}
 		} while (IsModified);
-		
+
 		for (int i = 0; i < height; i++) {
-			for(int j=0; j< width; j++){
-				//thin[i][j] = cm.getRGB(pixels[i*width+j])==WHITE_32.getRGB()?0:1;
-				pixels[i*width+j] = thin[i][j]==0? WHITE_32.getRGB():BLACK_32.getRGB();
+			for (int j = 0; j < width; j++) {
+				// thin[i][j] =
+				// cm.getRGB(pixels[i*width+j])==WHITE_32.getRGB()?0:1;
+				pixels[i * width + j] = thin[i][j] == 0 ? WHITE_32.getRGB()
+						: BLACK_32.getRGB();
 			}
 		}
 		return pixelsToImage(pixels, width, height);
 	}
-	
+
+	public static BufferedImage thinnerRosenfeld(BufferedImage image) {
+		int ly = image.getHeight();
+		int lx = image.getWidth();
+		int[] f = new int[lx * ly];
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, lx, ly, f,
+				0, lx);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
+		int[] g = new int[lx * ly];
+		ColorModel cm = ColorModel.getRGBdefault();
+		for (int i = 0; i < f.length; i++) {
+			f[i] = cm.getRGB(f[i]) == BLACK_32.getRGB() ? 1 : 0;
+			g[i] = f[i];
+		}
+		//
+
+		int shori, ii, kk, jj, kk1, kk2, kk3;
+		int nrnd, cond, n48, n26, n24, n46, n68, n82, n123, n345, n567, n781;
+		int[] a = { 0, -1, 1, 0, 0 };
+		int[] b = { 0, 0, 0, 1, -1 };
+		int[] n = new int[10];
+		do {
+			shori = 0;
+			for (int k = 1; k <= 4; k++) {
+				for (int i = 1; i < lx - 1; i++) {
+					ii = i + a[k];
+
+					for (int j = 1; j < ly - 1; j++) {
+						kk = i * ly + j;
+						if (f[kk] == 0)
+							continue;
+
+						jj = j + b[k];
+						kk1 = ii * ly + jj;
+
+						if (f[kk1] != 0)
+							continue;
+
+						kk1 = kk - ly - 1;
+						kk2 = kk1 + 1;
+						kk3 = kk2 + 1;
+						n[3] = f[kk1];
+						n[2] = f[kk2];
+						n[1] = f[kk3];
+						kk1 = kk - 1;
+						kk3 = kk + 1;
+						n[4] = f[kk1];
+						n[8] = f[kk3];
+						kk1 = kk + ly - 1;
+						kk2 = kk1 + 1;
+						kk3 = kk2 + 1;
+						n[5] = f[kk1];
+						n[6] = f[kk2];
+						n[7] = f[kk3];
+
+						nrnd = n[1] + n[2] + n[3] + n[4] + n[5] + n[6] + n[7]
+								+ n[8];
+						if (nrnd <= 1)
+							continue;
+
+						cond = 0;
+						n48 = n[4] + n[8];
+						n26 = n[2] + n[6];
+						n24 = n[2] + n[4];
+						n46 = n[4] + n[6];
+						n68 = n[6] + n[8];
+						n82 = n[8] + n[2];
+						n123 = n[1] + n[2] + n[3];
+						n345 = n[3] + n[4] + n[5];
+						n567 = n[5] + n[6] + n[7];
+						n781 = n[7] + n[8] + n[1];
+
+						if (n[2] == 1 && n48 == 0 && n567 > 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[6] == 1 && n48 == 0 && n123 > 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[8] == 1 && n26 == 0 && n345 > 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[4] == 1 && n26 == 0 && n781 > 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[5] == 1 && n46 == 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[7] == 1 && n68 == 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[1] == 1 && n82 == 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						if (n[3] == 1 && n24 == 0) {
+							if (cond != 0)
+								continue;
+							g[kk] = 0;
+							shori = 1;
+							continue;
+						}
+
+						cond = 1;
+						if (cond != 0)
+							continue;
+						g[kk] = 0;
+						shori = 1;
+					}
+				}
+
+				for (int i = 0; i < lx; i++) {
+					for (int j = 0; j < ly; j++) {
+						kk = i * ly + j;
+						f[kk] = g[kk];
+					}
+				}
+			}
+		} while (shori > 0);
+
+		for (int i = 0; i < g.length; i++) {
+			g[i] = g[i] == 0 ? WHITE_32.getRGB() : BLACK_32.getRGB();
+		}
+
+		return pixelsToImage(g, lx, ly);
+	}
+
 	private static int detectConnectivity(int[] a) {
 		int size = 0;
 		int a0, a1, a2, a3, a4, a5, a6, a7;
