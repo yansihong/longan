@@ -13,7 +13,12 @@ import java.awt.image.ColorConvertOp;
 import java.awt.image.ColorModel;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
+import java.io.File;
+import java.io.IOException;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1261,7 +1266,7 @@ public class ImageUtils {
 							continue;
 						}
 
-						cond = 1;
+						// cond = 1;
 						if (cond != 0)
 							continue;
 						g[kk] = 0;
@@ -1299,6 +1304,196 @@ public class ImageUtils {
 		size = a0 - a0 * a1 * a2 + a2 - a2 * a3 * a4 + a4 - a4 * a5 * a6 + a6
 				- a6 * a7 * a0;
 		return size;
+	}
+
+	public static int[] arr_8(int x) {
+		int l = (x + 1) / 2;
+		int[] r = new int[x];
+		for (int i = l; i < x + l; i++) {
+			r[i - l] = x - i;
+		}
+		return r;
+	}
+
+	public static void main(String[] args) throws IOException {
+		int[] p = {1,1,1,0,0,0,0,0,
+				   0,1,1,1,1,0,0,0,
+				   0,0,0,1,1,1,1,0,
+				   0,0,0,1,1,1,1,1,
+				   0,0,0,1,1,1,1,1,
+				   0,1,0,0,0,1,1,1,
+				   0,0,0,0,0,0,1,1,
+				   0,0,0,1,0,0,1,0};
+		int w=8,h=8;
+		int[] g = new int[p.length];
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				int x = p[i * w + j];
+				if (x == 0)
+					g[i * w + j] = 0;
+				else
+					g[i * w + j] = sum(p, i, j, w, h, 1, 0);
+			}
+		}
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++){
+				System.out.print(g[i*w+j]+"\t");
+			}
+			System.out.println();
+		}
+		
+		System.out.println();
+		
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				int z = 0;
+				int x = g[i * w + j];
+				if (x<=50){
+					p[i * w + j] = 0;
+					continue;
+				}
+				int p0 = (i - 1) * w + j;
+				int p1 = (i + 1) * w + j;
+				int p2 = i*w + j - 1;
+				int p3 = i*w + j + 1;
+				if (p0 >= 0 && p0 < p.length && g[p0] > x)
+					z++;
+				if (p1 >= 0 && p1 < p.length && g[p1] > x)
+					z++;
+				if (p2 >= 0 && p2 < p.length && g[p2] > x)
+					z++;
+				if (p3 >= 0 && p3 < p.length && g[p3] > x)
+					z++;
+				if (z==0||z==1){
+					p[i * w + j] =g[i * w + j]*-1;
+				}else{
+					p[i * w + j] =g[i * w + j];
+				}
+			}
+		}
+		
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++){
+				System.out.print(p[i*w+j]+"\t");
+			}
+			System.out.println();
+		}
+	}
+
+	public static int sum(int[] p, int x, int y, int w, int h, int level,
+			int sum) {
+		int count = level * 2 + 1;
+		int[] arr = arr_8(count);
+		boolean rt = false;
+		int s = 0;
+		for (int i = 0; i < arr.length; i++) {// 层循环
+			for (int j = 0; j < arr.length; j++) {
+				int px = x + arr[i];
+				if (px < 0 || px >= h)
+					continue;
+				px = px * w;
+				int py = y + arr[j];
+				if (py < 0 || py >= w)
+					continue;
+				if ((px + py) < 0 || (px + py) >= p.length)
+					continue;
+				if (px + py == x * w + y)
+					continue;
+				if (p[px + py] == 0)
+					rt = true;
+				else
+					s++;
+			}
+		}
+		if (x==0||x==h-1||y==0||y==h-1)return s;
+		// s--;
+		if (rt || s == 0)
+			return s;
+		else {
+			if (s == sum)
+				return s;
+			else
+				return sum(p, x, y, w, h, level + 1, s);
+		}
+	}
+
+	public static BufferedImage thin(BufferedImage image) {
+		int h = image.getHeight();
+		int w = image.getWidth();
+		int[] p = new int[w * h];
+		PixelGrabber pg = new PixelGrabber(image.getSource(), 0, 0, w, h, p, 0,
+				w);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			LOG.error(e.getMessage());
+		}
+		int[] g = new int[w * h];
+		ColorModel cm = ColorModel.getRGBdefault();
+		for (int i = 0; i < p.length; i++) {
+			g[i] = cm.getRGB(p[i]) == BLACK_32.getRGB() ? 1 : 0;
+			p[i] = g[i];
+		}
+		// int[] g = new int[p.length];
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				int x = p[i * w + j];
+				if (x == 0)
+					g[i * w + j] = 0;
+				else
+					g[i * w + j] = sum(p, i, j, w, h, 1, 0);
+			}
+		}
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				int z = 0;
+				int x = g[i * w + j];
+				if (x==0){
+					p[i * w + j] = WHITE_32.getRGB();
+					continue;
+				}
+				int p0 = (i - 1) * w + j;
+				int p1 = (i + 1) * w + j;
+				int p2 = i*w + j - 1;
+				int p3 = i*w + j + 1;
+				int p4 = (i - 1) * w + j + 1;
+				int p5 = (i - 1) * w + j - 1;
+				int p6 = (i + 1) * w + j + 1;
+				int p7 = (i + 1) * w + j - 1;
+				if (p0 >= 0 && p0 < p.length && g[p0] > x)
+					z++;
+				if (p1 >= 0 && p1 < p.length && g[p1] > x)
+					z++;
+				if (p2 >= 0 && p2 < p.length && g[p2] > x)
+					z++;
+				if (p3 >= 0 && p3 < p.length && g[p3] > x)
+					z++;
+				if (p4 >= 0 && p4 < p.length && g[p4] > x)
+					z++;
+				if (p5 >= 0 && p5 < p.length && g[p5] > x)
+					z++;
+				if (p6 >= 0 && p6 < p.length && g[p6] > x)
+					z++;
+				if (p7 >= 0 && p7 < p.length && g[p7] > x)
+					z++;
+				if (z==0||z==1){
+					p[i * w + j] =BLACK_32.getRGB();
+				}else{
+					p[i * w + j] =WHITE_32.getRGB();
+					//g[i*w+j]=0;
+				}
+			}
+		}
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++){
+				if (p[i * w + j]==BLACK_32.getRGB())
+					System.out.print("*"+g[i*w+j]+"\t");
+				else
+				System.out.print(g[i*w+j]+"\t");
+			}
+			System.out.println();
+		}
+		return pixelsToImage(p, w, h);
 	}
 
 	private static BufferedImage pixelsToImage(int[] pixels, int width,

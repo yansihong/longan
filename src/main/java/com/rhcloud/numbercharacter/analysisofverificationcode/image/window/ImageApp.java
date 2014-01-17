@@ -68,6 +68,12 @@ public final class ImageApp {
 		case Hilditch:
 			imageApp.repaint(ImageUtils.thinHilditch(imageApp.getSrcImage()));
 			break;
+		case Rosenfeld:
+			imageApp.repaint(ImageUtils.thinnerRosenfeld(imageApp.getSrcImage()));
+			break;
+		case Thin:
+			imageApp.repaint(ImageUtils.thin(imageApp.getSrcImage()));
+			break;
 		default:
 			break;
 		}

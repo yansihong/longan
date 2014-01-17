@@ -290,6 +290,22 @@ public class ImageWindow extends JFrame {
 		});
 		submenu.add(menuItem);
 		
+		menuItem = new JMenuItem("Rosenfeld");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ThinEnum.Rosenfeld);
+			}
+		});
+		submenu.add(menuItem);
+		
+		menuItem = new JMenuItem("Thin");
+		menuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ImageApp.filter(ThinEnum.Thin);
+			}
+		});
+		submenu.add(menuItem);
+		
 		
 		menuItem = new JMenuItem("膨胀(erode)");
 		menuItem.addActionListener(new ActionListener() {
